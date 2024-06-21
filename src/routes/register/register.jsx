@@ -1,16 +1,44 @@
 import "./register.scss";
-import { Link } from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
+import {useState} from "react";
+import apiRequest from "../../lib/apiRequest.js";
 
 function Register() {
+    const [error, serError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        serError("");
+        const formdata = new FormData(e.target);
+
+        const username = formdata.get("username");
+        const email = formdata.get("email");
+        const password = formdata.get("password");
+
+        try{
+            const res = await apiRequest.post("/auth/register", {
+            username, email, password});
+            navigate('/login');
+        }catch (err){
+            serError(err.response.data.message);
+        }finally {
+            setIsLoading(false);
+        }
+    }
+
   return (
     <div className="register">
       <div className="formContainer">
-        <form>
+        <form onSubmit={handleSubmit}>
           <h1>Create an Account</h1>
           <input name="username" type="text" placeholder="Username" />
           <input name="email" type="text" placeholder="Email" />
           <input name="password" type="password" placeholder="Password" />
-          <button >Register</button>
+          <button disabled={isLoading}>Register</button>
+            {error && <span>{error}</span>}
           <Link to="/login">Do you have an account?</Link>
         </form>
       </div>

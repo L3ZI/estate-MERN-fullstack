@@ -1,14 +1,48 @@
 import "./profileUpdatePage.scss";
+import {AuthContext} from "../../context/AuthContext.jsx";
+import {useContext, useState} from "react";
+import apiRequest from "../../lib/apiRequest.js";
+import {useNavigate} from "react-router-dom";
+import UploadWidget from "../../components/uploadWidget/UploadWidget.jsx";
 
 function ProfileUpdatePage() {
+  const [error, setError] = useState("");
+  const {currentUser, updateUser} = useContext(AuthContext);
+  const {avatar, setAvatar} =useState([]);
+
+  const navigate = useNavigate();
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const {username,email,password} = Object.fromEntries(formData);
+
+    try{
+      const res = await apiRequest.put(`/users/${currentUser.id}`,{
+        username,
+        email,
+        password,
+        avatar,
+      });
+      updateUser(res.data);
+      navigate('/profile');
+
+    }catch (err){
+      console.log(err);
+      setError(err.response.data.message);
+    }
+  }
+
   return (
     <div className="profileUpdatePage">
       <div className="formContainer">
-        <form>
+        <form onSubmit={handleSubmit}>
           <h1>Update Profile</h1>
           <div className="item">
             <label htmlFor="username">Username</label>
             <input
+                defaultValue={currentUser.username}
               id="username"
               name="username"
               type="text"
@@ -17,6 +51,7 @@ function ProfileUpdatePage() {
           <div className="item">
             <label htmlFor="email">Email</label>
             <input
+                defaultValue={currentUser.email}
               id="email"
               name="email"
               type="email"
@@ -27,10 +62,20 @@ function ProfileUpdatePage() {
             <input id="password" name="password" type="password" />
           </div>
           <button>Update</button>
+          {error && <span>{error}</span>}
         </form>
       </div>
       <div className="sideContainer">
-        <img src="" alt="" className="avatar" />
+        <img src={currentUser.avatar || '/noavatar.jpg'} alt="avatar" className="avatar" />
+        <UploadWidget uwConfig={{
+          cloudname: "dazvyl0aa",
+          uploadPreset: "estate",
+          multiple: false,
+          maxImageFileSize: 2000000,
+          folder: "avatars",
+        }}
+        setAvatar={setAvatar}
+        />
       </div>
     </div>
   );
